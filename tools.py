@@ -26,6 +26,7 @@ def get_sentence_emb(line,nlp,lang):
 def get_embeddings(f,nlp,lang):
   file = open(f)
   lines = file.readlines()
+  print(lines)
   sentences_vectors =[]
 
   for l in lines:
@@ -38,6 +39,7 @@ def get_embeddings(f,nlp,lang):
         sentences_vectors.append(0)
 
   return sentences_vectors
+
 
 def writeScores(method_name,scores):
     fn = "predictions.txt"

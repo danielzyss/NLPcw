@@ -1,6 +1,7 @@
 from tools import *
 
 def GetTrainingAndValidationSet():
+
     de_train_src = get_embeddings("en-de/train.ende.src", nlp_en, 'en')
     de_train_mt = get_embeddings("en-de/train.ende.mt", nlp_de, 'de')
 
@@ -31,3 +32,4 @@ def GetTrainingAndValidationSet():
     y_val_de = val_scores
 
     return X_train_de, X_val_de, y_train_de, y_val_de
+
