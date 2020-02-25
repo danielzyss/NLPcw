@@ -7,6 +7,9 @@ import torch
 import re, collections
 from collections import Counter, defaultdict
 import random
+import tqdm
+import unicodedata
+import time
 
 import spacy
 from nltk import download
@@ -33,4 +36,8 @@ except:
     os.system(sys.executable + " -m spacy link en_core_web_sm en300")
     nlp_en = spacy.load('en300')
 
+import torch
+import torch.nn as nn
+from torch import optim
+import torch.nn.functional as F
 

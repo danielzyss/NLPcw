@@ -19,7 +19,7 @@ class BPE:
 
         self.codes= []
 
-        for i in range(self.n_char):
+        for i in tqdm.tqdm(range(self.n_char), desc="Learning BPE encoding"):
             most_frequent = max(pairs, key=lambda x: (pairs[x], x))
             changes = self.replace_pair(most_frequent, self.vocab, indices)
             self.update_pair_statistics(most_frequent, changes, pairs, indices)
@@ -52,7 +52,6 @@ class BPE:
                 vocab[wordrepresentation]+=1
         vocab = dict(vocab)
         vocab = sorted(vocab.items(), key=lambda item:item[1], reverse=True)
-        print(vocab)
         return vocab
 
     def PairStatistics(self, vocab):
@@ -311,7 +310,9 @@ class BPE:
             segments = list(filter(None, segments))  # Remove empty strings in regex group.
             return segments + [ending.strip('\r\n ')] if ending != '' else segments
 
-b = BPE(['hello my name is daniel', 'i like to go to the beach'], ['play volleyball with me', 'I love the sunset', "you are the cutest", "I am the best"], 50)
-b.LearnBPE()
-b.ApplyBPE()
-print(b.segment("I enjoy going to the beach"))
+    def ApplyEncoding(self, data):
+        new_data = []
+        for d in tqdm.tqdm(data, desc="encoding data to BPE format"):
+            new_data.append(self.segment(d))
+            print(new_data)
+        return new_data
