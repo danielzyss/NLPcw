@@ -1,38 +1,6 @@
 from tools import *
 from BPE import BPE
 
-def GetTrainingAndValidationSet():
-
-    de_train_src = get_embeddings("en-de/train.ende.src", nlp_en, 'en')
-    de_train_mt = get_embeddings("en-de/train.ende.mt", nlp_de, 'de')
-
-    f_train_scores = open("en-de/train.ende.scores", 'r')
-    de_train_scores = f_train_scores.readlines()
-
-    de_val_src = get_embeddings("en-de/dev.ende.src", nlp_en, 'en')
-    de_val_mt = get_embeddings("en-de/dev.ende.mt", nlp_de, 'de')
-    f_val_scores = open("en-de/dev.ende.scores", 'r')
-    de_val_scores = f_val_scores.readlines()
-
-    print(f"Training mt: {len(de_train_mt)} Training src: {len(de_train_src)}")
-    print()
-    print(f"Validation mt: {len(de_val_mt)} Validation src: {len(de_val_src)}")
-
-    # Put the features into a list
-    X_train = [np.array(de_train_src), np.array(de_train_mt)]
-    X_train_de = np.array(X_train).transpose()
-
-    X_val = [np.array(de_val_src), np.array(de_val_mt)]
-    X_val_de = np.array(X_val).transpose()
-
-    # Scores
-    train_scores = np.array(de_train_scores).astype(float)
-    y_train_de = train_scores
-
-    val_scores = np.array(de_val_scores).astype(float)
-    y_val_de = val_scores
-
-    return X_train_de, X_val_de, y_train_de, y_val_de
 
 # def PreProcessData():
 #
@@ -81,4 +49,26 @@ def PreprocessDataSetForAttention(de_train_src, de_train_mt, de_val_src, de_val_
 
     return train_src_code, train_mt_code, val_src_code, val_mt_code, max_length, input_size, output_size
 
+def CoverageDeviationPenalty(attentionWeights):
 
+    output = []
+    for sentence in attentionWeights:
+        CDP = -1/len(sentence) * np.sum(np.log(1+(1-np.sum(sentence, 1))**2))
+        output.append(CDP)
+
+    return np.array(output)
+
+def AbsentmindednessPenaltyOut(attentionweights):
+    output = []
+    for sentence in attentionweights:
+        APout =  - np.sum(sentence * np.log(sentence))/sentence.shape[1]
+        output.append(APout)
+    return output
+
+def AbsentmindednessPenaltyIn(attentionweights):
+    output = []
+    for sentence in attentionweights:
+        sentence = np.array(list(zip(*sentence)))
+        APout =  - np.sum(sentence * np.log(sentence))/sentence.shape[1]
+        output.append(APout)
+    return output
