@@ -9,6 +9,9 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     NMTatt = NMTwithAttention(max_length, input_size,output_size, hidden_size=256, device=device)
-    NMTatt.Train(train_src_code,train_mt_code, 100)
+    NMTatt.Train(train_src_code,train_mt_code, n_epochs=10)
+    
+    # NMTatt.LoadModel()
+    # NMTatt.InferAttention(val_src_code, val_mt_code)
 
 

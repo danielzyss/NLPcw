@@ -140,6 +140,8 @@ class NMTwithAttention():
         self.decoder_optimizer = optim.SGD(self.decoder.parameters(), lr=learning_rate)
         self.criterion = nn.NLLLoss()
         self.teacher_forcing_ratio = teacher_forcing_ratio
+        self.encoder.train()
+        self.decoder.train()
 
 
         print_loss_total = 0  # Reset every print_every
@@ -159,7 +161,55 @@ class NMTwithAttention():
                 print_loss_total = 0
                 print(iter, iter / n_epochs * 100, print_loss_avg)
 
+            torch.save(self.encoder.state_dict(), "models/encoderAttn_latest.pt")
+            torch.save(self.decoder.state_dict(), "models/decoderAttn_latest.pt")
 
-    def Infer(self):
-        pass
 
+    def _infer(self, input_tensor, target_tensor):
+
+        attentions = []
+
+        with torch.no_grad():
+
+            encoder_hidden = self.encoder.initHidden()
+
+            input_length = input_tensor.size(0)
+            target_length = target_tensor.size(0)
+
+            encoder_outputs = torch.zeros(self.max_length, self.encoder.hidden_size, device=self.device)
+
+            for ei in range(input_length):
+                encoder_output, encoder_hidden = self.encoder(input_tensor[ei], encoder_hidden)
+                encoder_outputs[ei] = encoder_output[0, 0]
+
+            decoder_input = torch.tensor([[self.SOS_token]], device=self.device)
+
+            decoder_hidden = encoder_hidden
+
+            for di in range(target_length):
+                decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
+                decoder_input = target_tensor[di]
+                attentions.append(decoder_attention.numpy().flatten())
+
+        return np.array(attentions)
+
+    def LoadModel(self):
+        self.encoder.load_state_dict(torch.load("models/encoderAttn_latest.pt"))
+        self.decoder.load_state_dict(torch.load("models/decoderAttn_latest.pt"))
+
+    def InferAttention(self, src, mt):
+
+        output = []
+
+        self.encoder.eval()
+        self.decoder.eval()
+
+        with torch.no_grad():
+
+            for i in tqdm.tqdm(range(0, len(src)), "INFERENCE"):
+                input_tensor = self.Preprocess(src[i])
+                target_tensor = self.Preprocess(mt[i])
+                attentions = self._infer(input_tensor, target_tensor)
+                output.append(attentions)
+
+        return np.array(output)
