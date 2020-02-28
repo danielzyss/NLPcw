@@ -67,7 +67,22 @@ dependencies:
   - xz=5.2.4=h1de35cc_4
   - zlib=1.2.11=h1de35cc_3
   - pip:
+    - boto==2.49.0
+    - boto3==1.12.9
+    - botocore==1.15.9
+    - bpemb==0.3.0
     - de-core-news-sm==2.0.0
+    - docutils==0.15.2
     - en-core-web-sm==2.0.0
+    - gensim==3.8.1
+    - jmespath==0.9.5
+    - joblib==0.14.1
+    - python-dateutil==2.8.1
+    - s3transfer==0.3.3
+    - scikit-learn==0.22.1
+    - scipy==1.4.1
+    - sentencepiece==0.1.85
+    - sklearn==0.0
+    - smart-open==1.9.0
 prefix: /Users/danielzyss/.conda/envs/NLPcw
 

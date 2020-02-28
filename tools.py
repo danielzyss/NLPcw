@@ -11,14 +11,18 @@ def ImportData():
 
     with open("en-de/train.ende.src", "r") as f:
         de_train_src = f.readlines()
+        de_train_src = [line.rstrip() for line in de_train_src]
     with open("en-de/train.ende.mt", "r") as f:
         de_train_mt = f.readlines()
+        de_train_mt = [line.rstrip() for line in de_train_mt]
     with open("en-de/train.ende.scores", 'r') as f:
         de_train_scores = f.readlines()
     with open("en-de/dev.ende.src", "r") as f:
         de_val_src = f.readlines()
+        de_val_src = [line.rstrip() for line in de_val_src]
     with open("en-de/dev.ende.mt", "r") as f:
         de_val_mt = f.readlines()
+        de_val_mt = [line.rstrip() for line in de_val_mt]
     with open("en-de/dev.ende.scores", 'r') as f:
         de_val_scores = f.readlines()
 
@@ -91,3 +95,63 @@ def IndexEncode(corpus, word2index, max_length=0):
 def MaxSentenceLength(corpus):
     return max([len(s.split()) for s in corpus])
 
+
+def get_sentence_emb(line,nlp,lang):
+  if lang == 'en':
+    text = line.lower()
+    l = [token.lemma_ for token in nlp.tokenizer(text)]
+    l = ' '.join([word for word in l if word not in stop_words_en])
+
+  elif lang == 'de':
+    text = line.lower()
+    l = [token.lemma_ for token in nlp.tokenizer(text)]
+    l= ' '.join([word for word in l if word not in stop_words_de])
+
+  sen = nlp(l)
+  return sen.vector
+
+def get_embeddings(lines ,nlp,lang):
+
+  sentences_vectors = []
+
+  for l in lines:
+      vec = get_sentence_emb(l,nlp,lang)
+      if vec is not None:
+        mean = np.mean(vec)
+        std = np.std(vec)
+        sentences_vectors.append([mean, std])
+      else:
+        print("didn't work :", l)
+        sentences_vectors.append(0)
+
+  return sentences_vectors
+
+
+def CoverageDeviationPenalty(attentionWeights):
+
+    output = []
+    attentionWeights = attentionWeights
+    deviation_from = np.mean(attentionWeights)
+    for sentence in attentionWeights:
+        CDP = -1/len(sentence) * np.sum(np.log(1+(deviation_from-np.sum(sentence, 1))**2))
+        output.append(CDP.copy())
+
+    return np.array(output)
+
+def AbsentmindednessPenaltyOut(attentionweights):
+    output = []
+    for sentence in attentionweights:
+        APout =  - np.sum(sentence * np.log(sentence))/sentence.shape[1]
+        output.append(APout)
+    return np.array(output)
+
+def AbsentmindednessPenaltyIn(attentionweights):
+    output = []
+    for sentence in attentionweights:
+        sentence = np.array(list(zip(*sentence)))
+        APout =  - np.sum(sentence * np.log(sentence))/sentence.shape[1]
+        output.append(APout)
+    return np.array(output)
+
+def AbsentmindednessPenaltyRatio(API, APO):
+    return API/APO

@@ -10,6 +10,8 @@ import random
 import tqdm
 import unicodedata
 import time
+from bpemb import BPEmb
+from sklearn.manifold import TSNE
 
 import spacy
 from nltk import download
@@ -41,3 +43,8 @@ import torch.nn as nn
 from torch import optim
 import torch.nn.functional as F
 
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import Matern
+from sklearn.metrics import mean_squared_error
+from scipy.stats import pearsonr as pearson
+from sklearn.ensemble import RandomForestRegressor

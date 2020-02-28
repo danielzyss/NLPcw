@@ -23,14 +23,71 @@ from BPE import BPE
 #     de_train_src_bpe = BPEencoder.ApplyEncoding(de_train_src)
 #     print(de_train_src_bpe[0])
 
+def GetSentenceEmbedding(src, mt):
+
+    src_emb = get_embeddings(src, nlp_en, 'en')
+    mt_emb = get_embeddings(mt, nlp_de, 'de')
+
+    X = [np.array(src_emb), np.array(mt_emb)]
+    X_de = np.array(X)
+    X_de = np.concatenate((X_de[0], X_de[1]), -1)
+
+    return X_de
+
+
+def GetMonolingualBPE(src, mt):
+    bpemb_src = BPEmb(lang="en")
+    bpemb_mt = BPEmb(lang="de")
+
+    src_codes = []
+    for sentence in src:
+        src_codes.append(np.mean(bpemb_src.embed(sentence), axis=0))
+    src_codes = np.array(src_codes)
+
+    mt_codes = []
+    for sentence in mt:
+        mt_codes.append(np.mean(bpemb_mt.embed(sentence), axis=0))
+    mt_codes = np.array(mt_codes)
+
+    tnse_src = TSNE(n_components=2).fit_transform(src_codes)
+    tnse_mt = TSNE(n_components=2).fit_transform(mt_codes)
+
+    output = np.concatenate((tnse_src, tnse_mt), 1)
+
+    return output
+
+
+
+def GetMultilingualPBE(src, mt):
+
+    bpemb = BPEmb(lang="multi")
+
+    src_codes = []
+    for sentence in src:
+        src_codes.append(np.mean(bpemb.embed(sentence), axis=0))
+    src_codes = np.array(src_codes)
+
+    mt_codes = []
+    for sentence in mt:
+        mt_codes.append(np.mean(bpemb.embed(sentence), axis=0))
+    mt_codes = np.array(mt_codes)
+
+    tnse_src = TSNE(n_components=2).fit_transform(src_codes)
+    tnse_mt = TSNE(n_components=2).fit_transform(mt_codes)
+
+    output = np.concatenate((tnse_src, tnse_mt), 1)
+
+    return output
+
+
 
 def PreprocessDataSetForAttention(de_train_src, de_train_mt, de_val_src, de_val_mt):
 
 
-    de_train_src = CleanCorpus(de_train_src)
-    de_train_mt = CleanCorpus(de_train_mt)
-    de_val_src = CleanCorpus(de_val_src)
-    de_val_mt = CleanCorpus(de_val_mt)
+    de_train_src = CleanCorpus(de_train_src.copy())
+    de_train_mt = CleanCorpus(de_train_mt.copy())
+    de_val_src = CleanCorpus(de_val_src.copy())
+    de_val_mt = CleanCorpus(de_val_mt.copy())
 
     max_length = MaxSentenceLength(de_train_mt + de_train_src + de_val_mt + de_val_src)
 
@@ -49,26 +106,12 @@ def PreprocessDataSetForAttention(de_train_src, de_train_mt, de_val_src, de_val_
 
     return train_src_code, train_mt_code, val_src_code, val_mt_code, max_length, input_size, output_size
 
-def CoverageDeviationPenalty(attentionWeights):
 
-    output = []
-    for sentence in attentionWeights:
-        CDP = -1/len(sentence) * np.sum(np.log(1+(1-np.sum(sentence, 1))**2))
-        output.append(CDP)
+def Regression(X_train, y_train):
 
-    return np.array(output)
+    K = Matern()
+    GP = GaussianProcessRegressor(kernel=K)
+    GP.fit(X_train, y_train)
 
-def AbsentmindednessPenaltyOut(attentionweights):
-    output = []
-    for sentence in attentionweights:
-        APout =  - np.sum(sentence * np.log(sentence))/sentence.shape[1]
-        output.append(APout)
-    return output
+    return GP
 
-def AbsentmindednessPenaltyIn(attentionweights):
-    output = []
-    for sentence in attentionweights:
-        sentence = np.array(list(zip(*sentence)))
-        APout =  - np.sum(sentence * np.log(sentence))/sentence.shape[1]
-        output.append(APout)
-    return output
