@@ -25,8 +25,14 @@ def ImportData():
         de_val_mt = [line.rstrip() for line in de_val_mt]
     with open("en-de/dev.ende.scores", 'r') as f:
         de_val_scores = f.readlines()
+    with open("en-de/test.ende.src", "r") as f:
+        de_test_src = f.readlines()
+        de_test_src = [line.rstrip() for line in de_test_src]
+    with open("en-de/test.ende.mt", "r") as f:
+        de_test_mt = f.readlines()
+        de_test_mt = [line.rstrip() for line in de_test_mt]
 
-    return de_train_src, de_train_mt, de_train_scores, de_val_src, de_val_mt, de_val_scores
+    return de_train_src, de_train_mt, de_train_scores, de_val_src, de_val_mt, de_val_scores, de_test_src, de_test_mt
 
 def unicodeToAscii(s):
     return ''.join(
@@ -86,7 +92,10 @@ def IndexEncode(corpus, word2index, max_length=0):
 
     for i, s in enumerate(corpus):
         for j, w in enumerate(s.split()):
-            code[i,j] = word2index[w]
+            try:
+                code[i,j] = word2index[w]
+            except:
+                code[i,j] = 0
         # for k in range(max_length-len(s.split())):
         #     code[i, len(s.split())+k] = 1
 
@@ -156,14 +165,8 @@ def AbsentmindednessPenaltyIn(attentionweights):
 def AbsentmindednessPenaltyRatio(API, APO):
     return API/APO
 
-def writeScores(scores):
-    fn = "predictions.txt"
-    print("")
+def writeScores(name, scores):
+    fn = "exports"+name+".txt"
     with open(fn, 'w') as output_file:
         for idx,x in enumerate(scores):
-            # out = metrics[idx]+":"+str("{0:.2f}".format(x))+"\n"
-            # print(out)
             output_file.write(f"{x}\n")
-
-    with ZipFile("en-de_svr.zip", "w") as newzip:
-        newzip.write("predictions.txt")

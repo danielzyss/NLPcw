@@ -4,18 +4,27 @@ from funk import *
 
 if __name__ == "__main__":
 
-    de_train_src, de_train_mt, de_train_scores, de_val_src, de_val_mt, de_val_scores = ImportData()
+    de_train_src, de_train_mt, de_train_scores, de_val_src, de_val_mt, de_val_scores, de_test_src, de_test_mt = ImportData()
+
+    test = True
+
+    if test:
+        de_train_src = de_train_src + de_val_src
+        de_train_mt = de_train_mt + de_val_mt
+        de_val_src = de_test_src
+        de_val_mt = de_test_mt
+
+
     AttnFeatures_train, AttnFeatures_val, SentenceEmbedding_train, \
     SentenceEmbedding_val, monoBPE_train, monoBPE_val, multiBPE_train, multiBPE_val = GetFeatures(de_train_src, de_train_mt,
                                                                                                   de_val_src, de_val_mt,
-                                                                                                  from_scratch=False)
-
+                                                                                                  from_scratch=True)
 
     regression_type = ["GP", "forrest", "nn", "svm"]
     features_type = [("sentence",),
                      ("Attn",),
-                     ("monoBPE"),
-                     ("multiBPE"),
+                     ("monoBPE",),
+                     ("multiBPE",),
                      ("sentence", "Attn"),
                      ("sentence", "monoBPE"),
                      ("sentence", "multiBPE"),
@@ -24,6 +33,8 @@ if __name__ == "__main__":
                      ("sentence", "Attn", "monoBPE", "multiBPE"),
                      ("Attn", "multiBPE"),]
 
+    if not test:
+        results = pandas.DataFrame(index=["+".join(f) for f in features_type], columns=regression_type)
 
     for rt in regression_type:
         for ft in features_type:
@@ -50,29 +61,40 @@ if __name__ == "__main__":
             X_train = np.concatenate(features_train, 1)
             X_val = np.concatenate(features_val, 1)
 
-            de_train_scores = np.array(de_train_scores, dtype=np.float64)
-            de_val_scores = np.array(de_val_scores, dtype=np.float64)
-
             reg = Regression(X_train, de_train_scores, type=rt)
 
-            y_pred_train = reg.predict(X_train)
-            P_train = pearson(de_train_scores, y_pred_train)
-            mae_train = mean_absolute_error(de_train_scores, y_pred_train)
-            rmse_train = np.sqrt(mean_squared_error(de_train_scores, y_pred_train))
-
+            if not test:
+                y_pred_train = reg.predict(X_train)
+                de_train_scores = np.array(de_train_scores, dtype=np.float64)
+                P_train = pearson(de_train_scores, y_pred_train)
+                mae_train = mean_absolute_error(de_train_scores, y_pred_train)
+                rmse_train = np.sqrt(mean_squared_error(de_train_scores, y_pred_train))
 
             y_pred_val = reg.predict(X_val)
-            P_val = pearson(de_val_scores, y_pred_val)
-            mae_val = mean_absolute_error(de_val_scores, y_pred_val)
-            rmse_val = np.sqrt(mean_squared_error(de_val_scores, y_pred_val))
 
+            if test:
+                print("-" * 50)
+                print("Regressor: ", rt)
+                print("Features: ", "+".join(ft))
+                print("-" * 50)
 
-            print("-"*50)
-            print("Regressor: ", rt)
-            print("Features: ", "+".join(ft))
-            print("Training Scores  - pearson:", P_train, "MAE:", mae_train, "RMSE:", rmse_train)
-            print("Testing Scores   - pearson:", P_val, "MAE:", mae_val, "RMSE:", rmse_val)
-            print("-" * 50)
+                name = rt + "-" + "+".join(ft)
+                writeScores(name, y_pred_val)
+            else:
+                de_val_scores = np.array(de_val_scores, dtype=np.float64)
+                P_val = pearson(de_val_scores, y_pred_val)
+                mae_val = mean_absolute_error(de_val_scores, y_pred_val)
+                rmse_val = np.sqrt(mean_squared_error(de_val_scores, y_pred_val))
+
+                results[rt]["+".join(ft)] = {"train": (P_train, mae_train, rmse_train), "val": (P_val, mae_val, rmse_val)}
+                results.to_csv("results_test.csv")
+
+                print("-"*50)
+                print("Regressor: ", rt)
+                print("Features: ", "+".join(ft))
+                print("Training Scores  - pearson:", P_train, "MAE:", mae_train, "RMSE:", rmse_train)
+                print("Testing Scores   - pearson:", P_val, "MAE:", mae_val, "RMSE:", rmse_val)
+                print("-" * 50)
 
 
 

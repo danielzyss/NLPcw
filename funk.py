@@ -76,10 +76,10 @@ def PreprocessDataSetForAttention(de_train_src, de_train_mt, de_val_src, de_val_
     de_val_src = CleanCorpus(de_val_src.copy())
     de_val_mt = CleanCorpus(de_val_mt.copy())
 
-    max_length = MaxSentenceLength(de_train_mt + de_train_src + de_val_mt + de_val_src)
+    max_length = MaxSentenceLength(de_train_mt + de_train_src )
 
-    src_vocab, word2index_src, index2word_src = GetVocabulary(de_train_src + de_val_src )
-    mt_vocab, word2index_mt, index2word_mt = GetVocabulary(de_train_mt + de_val_mt )
+    src_vocab, word2index_src, index2word_src = GetVocabulary(de_train_src  )
+    mt_vocab, word2index_mt, index2word_mt = GetVocabulary(de_train_mt )
 
     train_src_code = IndexEncode(de_train_src, word2index_src, max_length)
     train_mt_code = IndexEncode(de_train_mt, word2index_mt, max_length)
@@ -105,7 +105,7 @@ def Regression(X_train, y_train, type="GP"):
         extra = ExtraTreeRegressor(criterion="mae")
         reg = BaggingRegressor(extra, random_state=0).fit(X_train, y_train)
     elif type=="nn":
-        reg = MLPRegressor(hidden_layer_sizes=(100, 200), activation='relu', solver='lbfgs', learning_rate='adaptive', tol=1e-6, verbose=True, max_iter=1000)
+        reg = MLPRegressor(hidden_layer_sizes=(100, 200), activation='relu', solver='lbfgs', learning_rate='adaptive', tol=1e-6, verbose=False, max_iter=1000)
         reg.fit(X_train, y_train)
     elif type=="svm":
         reg = SVR(kernel="rbf").fit(X_train, y_train)
@@ -115,7 +115,7 @@ def Regression(X_train, y_train, type="GP"):
 
     return reg
 
-def GetFeatures(de_train_src, de_train_mt, de_val_src, de_val_mt, from_scratch=False):
+def GetFeatures(de_train_src, de_train_mt, de_val_src, de_val_mt, from_scratch=False, retrain=False):
 
     # ATTENTION WEIGHTS
 
@@ -124,7 +124,8 @@ def GetFeatures(de_train_src, de_train_mt, de_val_src, de_val_mt, from_scratch=F
             de_train_src, de_train_mt, de_val_src, de_val_mt)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         NMTatt = NMTwithAttention(max_length, input_size,output_size, hidden_size=256, device=device)
-        # NMTatt.Train(train_src_code,train_mt_code, n_epochs=10)
+        if retrain:
+            NMTatt.Train(train_src_code,train_mt_code, n_epochs=10)
 
         NMTatt.LoadModel()
         attnWeights_val = NMTatt.InferAttention(val_src_code, val_mt_code)

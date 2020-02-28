@@ -12,6 +12,7 @@ import unicodedata
 import time
 from bpemb import BPEmb
 from sklearn.manifold import TSNE
+import pandas
 
 import spacy
 from nltk import download
