@@ -44,7 +44,13 @@ from torch import optim
 import torch.nn.functional as F
 
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Matern
+from sklearn.gaussian_process.kernels import RBF
 from sklearn.metrics import mean_squared_error
 from scipy.stats import pearsonr as pearson
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import BaggingRegressor
+from sklearn.tree import ExtraTreeRegressor
+from sklearn.neural_network import MLPRegressor
+from sklearn.svm import SVR
+from zipfile import ZipFile
+from sklearn.metrics import mean_absolute_error
+
