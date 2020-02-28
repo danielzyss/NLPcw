@@ -131,6 +131,8 @@ def GetFeatures(de_train_src, de_train_mt, de_val_src, de_val_mt, from_scratch=F
         attnWeights_val = NMTatt.InferAttention(val_src_code, val_mt_code)
         attnWeights_train = NMTatt.InferAttention(train_src_code, train_mt_code)
 
+        np.save("tmp/AttnWeights_train.npy", attnWeights_train)
+        np.save("tmp/AttnWeights_val.npy", attnWeights_val)
     else:
         attnWeights_val = np.load("tmp/AttnWeights_val.npy")
         attnWeights_train = np.load("tmp/AttnWeights_train.npy")

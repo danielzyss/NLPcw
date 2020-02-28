@@ -13,6 +13,7 @@ if __name__ == "__main__":
         de_train_mt = de_train_mt + de_val_mt
         de_val_src = de_test_src
         de_val_mt = de_test_mt
+        de_train_scores = de_train_scores + de_val_scores
 
 
     AttnFeatures_train, AttnFeatures_val, SentenceEmbedding_train, \
@@ -60,12 +61,12 @@ if __name__ == "__main__":
 
             X_train = np.concatenate(features_train, 1)
             X_val = np.concatenate(features_val, 1)
+            de_train_scores = np.array(de_train_scores, dtype=np.float64)
 
             reg = Regression(X_train, de_train_scores, type=rt)
 
             if not test:
                 y_pred_train = reg.predict(X_train)
-                de_train_scores = np.array(de_train_scores, dtype=np.float64)
                 P_train = pearson(de_train_scores, y_pred_train)
                 mae_train = mean_absolute_error(de_train_scores, y_pred_train)
                 rmse_train = np.sqrt(mean_squared_error(de_train_scores, y_pred_train))

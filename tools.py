@@ -166,7 +166,7 @@ def AbsentmindednessPenaltyRatio(API, APO):
     return API/APO
 
 def writeScores(name, scores):
-    fn = "exports"+name+".txt"
+    fn = "exports/"+name+".txt"
     with open(fn, 'w') as output_file:
         for idx,x in enumerate(scores):
             output_file.write(f"{x}\n")
